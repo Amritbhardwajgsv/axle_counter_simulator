@@ -11,6 +11,7 @@ RUN npm --prefix frontend ci
 COPY tsconfig.json ./
 COPY src ./src
 COPY frontend ./frontend
+COPY hitter.js ./
 
 RUN npm run build
 
@@ -26,6 +27,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/frontend/dist ./frontend/dist
+COPY --from=build /app/hitter.js ./hitter.js
 
 EXPOSE 8081
 
@@ -34,4 +36,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 USER node
 
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-c", "node hitter.js & node dist/server.js"]
