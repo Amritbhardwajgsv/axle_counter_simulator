@@ -309,7 +309,7 @@ function parseClientMessage(value: string): ClientMessage {
             ) {
                 throw new Error("Unknown station route");
             }
-            requirePositiveInteger(parsed.axleCount, "axleCount");
+            requireAxleCount(parsed.axleCount);
             optionalDelay(parsed.axlePulseMs, "axlePulseMs");
             optionalDelay(parsed.sectionPauseMs, "sectionPauseMs");
             return parsed as ClientMessage;
@@ -322,24 +322,27 @@ function requireSectionAndAxles(value: Record<string, unknown>): void {
     if (typeof value.sectionName !== "string") {
         throw new Error("sectionName is required");
     }
-    requirePositiveInteger(value.axleCount, "axleCount");
+    requireAxleCount(value.axleCount);
 }
 
-function requirePositiveInteger(value: unknown, name: string): void {
+function requireAxleCount(value: unknown): void {
     if (
         !Number.isInteger(value) ||
         Number(value) <= 0 ||
         Number(value) > MAX_AXLE_COUNT
     ) {
         throw new Error(
-            `${name} must be an integer between 1 and ${MAX_AXLE_COUNT}`,
+            `axleCount must be an integer between 1 and ${MAX_AXLE_COUNT}`,
         );
     }
 }
 
 function optionalDelay(value: unknown, name: string): void {
-    if (value !== undefined) {
-        requirePositiveInteger(value, name);
+    if (
+        value !== undefined &&
+        (!Number.isInteger(value) || Number(value) <= 0 || Number(value) > 10_000)
+    ) {
+        throw new Error(`${name} must be between 1 and 10000 milliseconds`);
     }
 }
 
