@@ -1,0 +1,849 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap");
+
+:root {
+    font-family: "Inter", Arial, sans-serif;
+    color: #17242d;
+    background: #edf1f3;
+    font-synthesis: none;
+    --blue: #005a84;
+    --blue-dark: #063f5c;
+    --blue-soft: #e4f0f5;
+    --surface: #ffffff;
+    --surface-alt: #f6f8f9;
+    --border: #ced8dd;
+    --text: #17242d;
+    --muted: #687982;
+    --clear: #16834b;
+    --occupied: #d48600;
+    --failed: #c43b3b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: #edf1f3;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+.app-shell {
+    width: min(100%, 1600px);
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.topbar,
+.panel-heading,
+.control-heading,
+.system-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.topbar {
+    padding: 20px 24px;
+    border-top: 5px solid var(--blue);
+    border-radius: 3px;
+    background: var(--surface);
+    box-shadow: 0 2px 10px rgba(23, 36, 45, 0.08);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.brand-mark {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    border-radius: 3px;
+    background: var(--blue);
+}
+
+.brand-mark i {
+    width: 5px;
+    height: 29px;
+    display: block;
+    background: #fff;
+    transform: skew(-18deg);
+}
+
+.brand-mark i:nth-child(2) {
+    height: 36px;
+}
+
+.brand-name,
+.eyebrow {
+    margin: 0 0 3px;
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+h1,
+h2 {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+}
+
+h1 {
+    font-size: clamp(22px, 2.4vw, 34px);
+    line-height: 1.05;
+}
+
+h2 {
+    font-size: 22px;
+}
+
+.brand small {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.system-summary {
+    justify-content: flex-end;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-right: 18px;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.connection-status span,
+.connection-status small {
+    display: block;
+}
+
+.connection-status small {
+    margin-bottom: 2px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.connection-dot,
+.legend i {
+    width: 9px;
+    height: 9px;
+    display: inline-block;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--failed);
+}
+
+.connection-dot.online,
+.legend .green {
+    background: var(--clear);
+}
+
+.legend .amber {
+    background: var(--occupied);
+}
+
+.legend .red {
+    background: var(--failed);
+}
+
+.lifecycle {
+    padding: 7px 10px;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    font-family: "Roboto Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+}
+
+.lifecycle.RUNNING {
+    color: var(--clear);
+    background: #edf8f2;
+}
+
+.lifecycle.STARTING {
+    color: var(--occupied);
+    background: #fff7e7;
+}
+
+.lifecycle.STOPPED {
+    color: var(--failed);
+    background: #fff0f0;
+}
+
+.start-button {
+    min-height: 40px;
+    padding: 9px 16px;
+    border: 1px solid var(--blue);
+    border-radius: 3px;
+    color: #fff;
+    background: var(--blue);
+    font-weight: 600;
+}
+
+.start-button:hover:not(:disabled) {
+    background: var(--blue-dark);
+}
+
+.error-banner {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid #e6a6a6;
+    border-radius: 3px;
+    color: #842525;
+    background: #fff1f1;
+}
+
+.charge-panel {
+    position: relative;
+    margin-top: 16px;
+    padding: 16px 18px 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 16px;
+    overflow: hidden;
+    border: 1px solid #e1c37c;
+    border-radius: 3px;
+    background: #fffaf0;
+}
+
+.charge-copy {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.charge-copy strong,
+.charge-copy small {
+    display: block;
+}
+
+.charge-copy strong {
+    color: #754d00;
+    font-size: 14px;
+}
+
+.charge-copy small {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.voltage-badge {
+    padding: 9px;
+    border-radius: 3px;
+    color: #fff;
+    background: var(--occupied);
+    font-family: "Roboto Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.charge-timer {
+    color: #754d00;
+    font-family: "Roboto Mono", monospace;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.charge-timer span {
+    margin-left: 2px;
+    font-size: 13px;
+}
+
+.charge-track {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: #f0dfb5;
+}
+
+.charge-track i {
+    display: block;
+    height: 100%;
+    background: var(--occupied);
+    transition: width 900ms linear;
+}
+
+.panel {
+    margin-top: 18px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--surface);
+    box-shadow: 0 2px 10px rgba(23, 36, 45, 0.06);
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.legend span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mobile-scroll-hint {
+    display: none;
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.diagram-shell {
+    position: relative;
+    margin-top: 16px;
+}
+
+.diagram-viewport {
+    position: relative;
+    height: 630px;
+    overflow: hidden;
+    border: 1px solid #bfcbd0;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    background: #f8fafb;
+}
+
+.diagram-viewport.dragging {
+    cursor: grabbing;
+}
+
+.diagram-transform {
+    width: 1750px;
+    height: 760px;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.zoom-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 2px 8px rgba(23, 36, 45, 0.12);
+}
+
+.zoom-controls button,
+.zoom-controls output {
+    min-width: 38px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    background: transparent;
+    font-family: "Roboto Mono", monospace;
+    font-size: 12px;
+}
+
+.zoom-controls button:hover {
+    color: #fff;
+    background: var(--blue);
+}
+
+.zoom-controls output {
+    min-width: 56px;
+    color: var(--muted);
+}
+
+.zoom-controls .reset-view {
+    width: auto;
+    padding: 0 11px;
+    border-right: 0;
+}
+
+.station-diagram {
+    position: relative;
+    width: 1750px;
+    height: 760px;
+    overflow: hidden;
+    background:
+        linear-gradient(rgba(0, 90, 132, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 90, 132, 0.035) 1px, transparent 1px),
+        #f8fafb;
+    background-size: 24px 24px;
+}
+
+.track-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.track-lines path,
+.track-lines line {
+    fill: none;
+    stroke: #65757d;
+    stroke-width: 4;
+    vector-effect: non-scaling-stroke;
+}
+
+.track-lines .main-track {
+    stroke-width: 5;
+}
+
+.track-lines .loop-track {
+    stroke-width: 4;
+}
+
+.track-lines line {
+    stroke-width: 2;
+}
+
+.track-lines .tc-cut line {
+    stroke: #65757d;
+    stroke-width: 2;
+    stroke-linecap: square;
+}
+
+.track-label {
+    position: absolute;
+    transform: translateX(-50%);
+    color: #374850;
+    font-family: "Roboto Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.direction {
+    position: absolute;
+    bottom: 12px;
+    color: var(--muted);
+    font-family: "Roboto Mono", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.direction-left {
+    left: 16px;
+}
+
+.direction-right {
+    right: 16px;
+}
+
+.section-card {
+    position: absolute;
+    width: 128px;
+    min-height: 104px;
+    transform: translateX(-5%);
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--failed);
+    border-radius: 3px;
+    background: var(--surface);
+    box-shadow: 0 2px 6px rgba(23, 36, 45, 0.12);
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.section-card.unoccupied {
+    border-top-color: var(--clear);
+}
+
+.section-card.occupied {
+    border-top-color: var(--occupied);
+    background: #fffaf0;
+    box-shadow: 0 0 0 2px rgba(212, 134, 0, 0.18);
+}
+
+.section-card.active {
+    box-shadow: 0 0 0 2px var(--blue), 0 4px 14px rgba(0, 90, 132, 0.18);
+    z-index: 3;
+}
+
+.geometry-path {
+    fill: none;
+    stroke: none;
+}
+
+.train-vehicle {
+    pointer-events: none;
+    transition: transform 45ms linear;
+}
+
+.train-vehicle .vehicle-body {
+    fill: #f4f7f8;
+    stroke: var(--blue);
+    stroke-width: 2;
+}
+
+.train-vehicle.locomotive .vehicle-body {
+    fill: #e2eff4;
+}
+
+.train-vehicle .cab-face {
+    fill: var(--blue);
+    stroke: none;
+}
+
+.train-vehicle .window {
+    fill: #9bc9dd;
+    stroke: var(--blue-dark);
+    stroke-width: 1;
+}
+
+.train-vehicle .headlight {
+    fill: #ffd04f;
+    stroke: #8d6800;
+    stroke-width: 1;
+}
+
+.train-vehicle .underframe,
+.train-vehicle .bogie rect {
+    fill: #4c5b62;
+}
+
+.train-vehicle .bogie circle {
+    fill: #f7f9fa;
+    stroke: #25343a;
+    stroke-width: 2;
+}
+
+.train-vehicle .coupler {
+    stroke: #25343a;
+    stroke-width: 3;
+}
+
+.train-vehicle.coach .vehicle-body {
+    fill: #fff;
+}
+
+.section-title,
+.count-row,
+.relay-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title strong {
+    color: var(--text);
+    font-family: "Roboto Mono", monospace;
+    font-size: 18px;
+}
+
+.section-title span {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.count-row {
+    margin: 9px 0;
+    gap: 4px;
+    color: var(--muted);
+    font-size: 7px;
+}
+
+.count-row span {
+    text-align: center;
+}
+
+.count-row b {
+    display: block;
+    color: var(--text);
+    font-family: "Roboto Mono", monospace;
+    font-size: 13px;
+}
+
+.relay-row {
+    gap: 5px;
+}
+
+.relay {
+    color: var(--muted);
+    font-size: 8px;
+    text-align: center;
+}
+
+.relay i {
+    display: block;
+    width: 11px;
+    height: 11px;
+    margin: 0 auto 4px;
+    border: 2px solid #aab6bc;
+    border-radius: 50%;
+    background: #dbe1e4;
+}
+
+.relay i.picked {
+    border-color: #0b6939;
+    background: var(--clear);
+}
+
+.control-heading label {
+    display: grid;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+input {
+    width: 110px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    outline: none;
+    color: var(--text);
+    background: var(--surface);
+}
+
+input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(0, 90, 132, 0.12);
+}
+
+.route-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.route-card {
+    min-height: 92px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    text-align: left;
+    background: var(--surface-alt);
+    transition: border-color 150ms ease, background 150ms ease;
+}
+
+.route-card:hover:not(:disabled) {
+    border-color: var(--blue);
+    background: var(--blue-soft);
+}
+
+.route-card span {
+    display: block;
+    margin-bottom: 9px;
+    color: var(--blue);
+    font-weight: 700;
+}
+
+.route-card small {
+    color: var(--muted);
+    font-family: "Roboto Mono", monospace;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.route-status {
+    margin: 14px 0 0;
+    padding: 11px 12px;
+    border-left: 3px solid var(--border);
+    color: var(--muted);
+    background: var(--surface-alt);
+    font-family: "Roboto Mono", monospace;
+    font-size: 11px;
+}
+
+.route-status.active-route {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--blue);
+    border-color: var(--blue);
+    background: var(--blue-soft);
+}
+
+.route-status.active-route b {
+    color: var(--text);
+    font-weight: 400;
+}
+
+@media (max-width: 900px) {
+    .app-shell {
+        padding: 14px;
+    }
+
+    .topbar {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 17px;
+    }
+
+    .system-summary {
+        justify-content: space-between;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+    }
+
+    .panel {
+        padding: 16px;
+    }
+
+    .mobile-scroll-hint {
+        display: block;
+    }
+
+    .route-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .app-shell {
+        padding: 0;
+    }
+
+    .topbar,
+    .panel,
+    .charge-panel,
+    .error-banner {
+        margin-top: 0;
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+    }
+
+    .brand-mark {
+        width: 44px;
+        height: 44px;
+    }
+
+    .brand small {
+        font-size: 10px;
+    }
+
+    .system-summary {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+    }
+
+    .connection-status {
+        padding-right: 0;
+        border-right: 0;
+    }
+
+    .start-button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .charge-panel {
+        grid-template-columns: 1fr auto;
+        padding: 14px 14px 19px;
+    }
+
+    .charge-copy {
+        align-items: flex-start;
+    }
+
+    .charge-copy small {
+        max-width: 210px;
+        font-size: 10px;
+    }
+
+    .voltage-badge {
+        display: none;
+    }
+
+    .panel-heading,
+    .control-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .legend {
+        width: 100%;
+    }
+
+    .control-heading label,
+    .control-heading input {
+        width: 100%;
+    }
+
+    .diagram-shell {
+        margin-right: -16px;
+        margin-left: -16px;
+    }
+
+    .diagram-viewport {
+        height: 480px;
+        border-right: 0;
+        border-left: 0;
+    }
+
+    .zoom-controls {
+        right: 8px;
+    }
+
+    .route-status.active-route {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

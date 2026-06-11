@@ -1,0 +1,29 @@
+{
+  "name": "axle_counter_simulation",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npm run build:server && npm run build:frontend",
+    "build:server": "tsc",
+    "build:frontend": "npm --prefix frontend run build",
+    "start": "node dist/server.js",
+    "dev": "tsx src/dev.ts",
+    "demo": "tsx src/index.ts",
+    "test": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Axle counter railway signalling simulation",
+  "dependencies": {
+    "express": "^5.1.0",
+    "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^25.9.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

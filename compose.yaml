@@ -1,0 +1,12 @@
+services:
+  axle-counter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: axle-counter-simulator
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8081
+    ports:
+      - "8081:8081"
