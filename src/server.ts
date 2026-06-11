@@ -4,6 +4,11 @@ import path from "node:path";
 import { WebSocket, WebSocketServer } from "ws";
 import { SimulationEngine } from "./engine/simulationengine";
 import {
+    getRequestIp,
+    logRequest,
+    requestLogger,
+} from "./requestlogger";
+import {
     ClientMessage,
     ServerMessage,
     STATION_ROUTES,
@@ -19,6 +24,7 @@ const webSocketServer = new WebSocketServer({ server, path: "/ws" });
 let activeRoute: StationRoute | null = null;
 
 const frontendDirectory = path.resolve(process.cwd(), "frontend", "dist");
+app.use(requestLogger());
 app.get("/health", (_request, response) => {
     response.status(200).json({
         status: "ok",
@@ -46,22 +52,55 @@ engine.subscribe((state) => {
     broadcast({ type: "STATE_SNAPSHOT", state });
 });
 
-webSocketServer.on("connection", (socket) => {
+webSocketServer.on("connection", (socket, request) => {
+    const clientIp = getRequestIp(request);
+    logRequest({
+        protocol: "websocket",
+        ip: clientIp,
+        purpose: "CONNECT /ws",
+        outcome: "connected",
+    });
+
     send(socket, { type: "STATE_SNAPSHOT", state: engine.getState() });
 
     socket.on("message", async (data) => {
         let message: ClientMessage;
+        const startedAt = Date.now();
 
         try {
             message = parseClientMessage(data.toString());
             await handleMessage(socket, message);
+            logRequest({
+                protocol: "websocket",
+                ip: clientIp,
+                purpose: message.type,
+                outcome: "accepted",
+                durationMs: Date.now() - startedAt,
+                metadata: getMessageLogMetadata(message),
+            });
         } catch (error) {
+            logRequest({
+                protocol: "websocket",
+                ip: clientIp,
+                purpose: getMessageType(data.toString()),
+                outcome: "rejected",
+                durationMs: Date.now() - startedAt,
+            });
             send(socket, {
                 type: "ERROR",
                 requestId: getRequestId(data.toString()),
                 message: error instanceof Error ? error.message : "Unknown error",
             });
         }
+    });
+
+    socket.on("close", (code) => {
+        logRequest({
+            protocol: "websocket",
+            ip: clientIp,
+            purpose: "DISCONNECT /ws",
+            outcome: String(code),
+        });
     });
 });
 
@@ -318,6 +357,38 @@ function getRequestId(value: string): string | undefined {
             : undefined;
     } catch {
         return undefined;
+    }
+}
+
+function getMessageType(value: string): string {
+    try {
+        const parsed: unknown = JSON.parse(value);
+        return isRecord(parsed) && typeof parsed.type === "string"
+            ? parsed.type
+            : "UNKNOWN_MESSAGE";
+    } catch {
+        return "INVALID_JSON";
+    }
+}
+
+function getMessageLogMetadata(
+    message: ClientMessage,
+): Record<string, string | number> | undefined {
+    switch (message.type) {
+        case "GET_STATE":
+        case "START_SYSTEM":
+            return undefined;
+        case "TRAIN_ENTER":
+        case "TRAIN_EXIT":
+            return {
+                section: message.sectionName,
+                axleCount: message.axleCount,
+            };
+        case "RUN_ROUTE":
+            return {
+                route: message.route,
+                axleCount: message.axleCount,
+            };
     }
 }
 
