@@ -322,6 +322,6 @@ function delay(milliseconds: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
     console.log(`Station simulator listening on http://localhost:${PORT}`);
 });
