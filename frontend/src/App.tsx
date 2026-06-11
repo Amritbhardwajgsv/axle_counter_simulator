@@ -103,6 +103,9 @@ const ROUTES: Array<{
     { id: "LOWER_LOOP", title: "Lower loop", path: "1T > 2T > 3T > 4T > 7T > 9T > 10T > 11T" },
 ];
 
+const MIN_AXLE_COUNT = 1;
+const MAX_AXLE_COUNT = 64;
+
 export default function App() {
     const {
         state,
@@ -242,12 +245,25 @@ export default function App() {
                         Train axles
                         <input
                             type="number"
-                            min="1"
-                            max="64"
+                            min={MIN_AXLE_COUNT}
+                            max={MAX_AXLE_COUNT}
                             value={axleCount}
-                            onChange={(event) =>
-                                setAxleCount(Number(event.target.value))
-                            }
+                            onChange={(event) => {
+                                const value = Number(event.target.value);
+                                if (!Number.isFinite(value)) {
+                                    return;
+                                }
+
+                                setAxleCount(
+                                    Math.min(
+                                        MAX_AXLE_COUNT,
+                                        Math.max(
+                                            MIN_AXLE_COUNT,
+                                            Math.trunc(value),
+                                        ),
+                                    ),
+                                );
+                            }}
                         />
                     </label>
                 </div>

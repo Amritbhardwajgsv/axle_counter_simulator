@@ -11,6 +11,7 @@ import {
 } from "./protocol";
 
 const PORT = Number(process.env.PORT ?? 8081);
+const MAX_AXLE_COUNT = 64;
 const engine = new SimulationEngine();
 const app = express();
 const server = createServer(app);
@@ -286,8 +287,14 @@ function requireSectionAndAxles(value: Record<string, unknown>): void {
 }
 
 function requirePositiveInteger(value: unknown, name: string): void {
-    if (!Number.isInteger(value) || Number(value) <= 0) {
-        throw new Error(`${name} must be a positive integer`);
+    if (
+        !Number.isInteger(value) ||
+        Number(value) <= 0 ||
+        Number(value) > MAX_AXLE_COUNT
+    ) {
+        throw new Error(
+            `${name} must be an integer between 1 and ${MAX_AXLE_COUNT}`,
+        );
     }
 }
 
