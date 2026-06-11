@@ -116,7 +116,12 @@ export default function App() {
         clearError,
         send,
     } = useStationSocket();
-    const [axleCount, setAxleCount] = useState(12);
+    const [axleCountInput, setAxleCountInput] = useState("12");
+    const axleCount = Number(axleCountInput);
+    const axleCountValid =
+        Number.isInteger(axleCount) &&
+        axleCount >= MIN_AXLE_COUNT &&
+        axleCount <= MAX_AXLE_COUNT;
 
     const sections = useMemo(
         () =>
@@ -130,6 +135,10 @@ export default function App() {
     const running = state?.systemLifecycle === "RUNNING";
 
     const runRoute = (route: StationRoute) => {
+        if (!axleCountValid) {
+            return;
+        }
+
         send({
             type: "RUN_ROUTE",
             route,
@@ -244,27 +253,27 @@ export default function App() {
                     <label>
                         Train axles
                         <input
-                            type="number"
-                            min={MIN_AXLE_COUNT}
-                            max={MAX_AXLE_COUNT}
-                            value={axleCount}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={2}
+                            value={axleCountInput}
+                            disabled={routeProgress !== null}
+                            aria-invalid={!axleCountValid}
+                            aria-describedby="axle-count-help"
                             onChange={(event) => {
-                                const value = Number(event.target.value);
-                                if (!Number.isFinite(value)) {
-                                    return;
-                                }
-
-                                setAxleCount(
-                                    Math.min(
-                                        MAX_AXLE_COUNT,
-                                        Math.max(
-                                            MIN_AXLE_COUNT,
-                                            Math.trunc(value),
-                                        ),
-                                    ),
+                                const digits = event.target.value.replace(
+                                    /\D/g,
+                                    "",
                                 );
+                                setAxleCountInput(digits.slice(0, 2));
                             }}
                         />
+                        <small id="axle-count-help">
+                            {axleCountValid
+                                ? `${MIN_AXLE_COUNT}-${MAX_AXLE_COUNT} axles`
+                                : `Enter ${MIN_AXLE_COUNT}-${MAX_AXLE_COUNT}`}
+                        </small>
                     </label>
                 </div>
                 <div className="route-list">
@@ -272,7 +281,11 @@ export default function App() {
                         <button
                             key={route.id}
                             className="route-card"
-                            disabled={!running || routeProgress !== null}
+                            disabled={
+                                !running ||
+                                routeProgress !== null ||
+                                !axleCountValid
+                            }
                             onClick={() => runRoute(route.id)}
                         >
                             <span>{route.title}</span>

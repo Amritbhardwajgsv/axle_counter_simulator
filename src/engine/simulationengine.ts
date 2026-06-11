@@ -9,6 +9,7 @@ import {
 } from "../models/tracksection";
 
 export type SystemLifecycle = "STOPPED" | "STARTING" | "RUNNING";
+const MAX_AXLE_COUNT = 64;
 
 export interface SimulationState {
     systemLifecycle: SystemLifecycle;
@@ -332,8 +333,14 @@ export class SimulationEngine {
     }
 
     private validateAxleCount(axleCount: number): void {
-        if (!Number.isInteger(axleCount) || axleCount <= 0) {
-            throw new Error("Axle count must be a positive integer");
+        if (
+            !Number.isInteger(axleCount) ||
+            axleCount <= 0 ||
+            axleCount > MAX_AXLE_COUNT
+        ) {
+            throw new Error(
+                `Axle count must be an integer between 1 and ${MAX_AXLE_COUNT}`,
+            );
         }
     }
 
