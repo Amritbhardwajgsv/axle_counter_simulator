@@ -22,6 +22,7 @@ const app = express();
 const server = createServer(app);
 const webSocketServer = new WebSocketServer({ server, path: "/ws" });
 let activeRoute: StationRoute | null = null;
+let activeSectionName: string | null = null;
 
 const frontendDirectory = path.resolve(process.cwd(), "frontend", "dist");
 app.use(requestLogger());
@@ -128,6 +129,15 @@ async function handleMessage(
             if (activeRoute) {
                 throw new Error(`Route ${activeRoute} is already running`);
             }
+            if (
+                STATION_ROUTES[message.route].some((sectionName) =>
+                    engine.isSectionResetting(sectionName),
+                )
+            ) {
+                throw new Error(
+                    `Route ${message.route} contains a section that is resetting`,
+                );
+            }
 
             activeRoute = message.route;
             accept(socket, message.requestId);
@@ -139,6 +149,31 @@ async function handleMessage(
             ).finally(() => {
                 activeRoute = null;
             });
+            break;
+        case "RESET_SECTION": {
+            if (activeSectionName === message.sectionName) {
+                throw new Error(
+                    `${message.sectionName} cannot reset until the train has cleared it`,
+                );
+            }
+
+            const resetPromise = engine.resetRail(
+                message.sectionName,
+                message.railId,
+            );
+            accept(socket, message.requestId);
+            await resetPromise;
+            break;
+        }
+        case "FAIL_RAIL":
+            if (activeRoute && activeSectionName !== message.sectionName) {
+                throw new Error(
+                    `During route ${activeRoute}, only active section ${activeSectionName} can be failed`,
+                );
+            }
+
+            engine.failRail(message.sectionName, message.railId);
+            accept(socket, message.requestId);
             break;
     }
 }
@@ -155,15 +190,20 @@ async function runRoute(
 
     try {
         for (const [index, sectionName] of sections.entries()) {
-            await moveThroughSection(
-                route,
-                sectionName,
-                index,
-                sections.length,
-                axleCount,
-                axlePulseMs,
-                sectionPauseMs,
-            );
+            activeSectionName = sectionName;
+            try {
+                await moveThroughSection(
+                    route,
+                    sectionName,
+                    index,
+                    sections.length,
+                    axleCount,
+                    axlePulseMs,
+                    sectionPauseMs,
+                );
+            } finally {
+                activeSectionName = null;
+            }
         }
 
         broadcast({ type: "ROUTE_COMPLETED", route });
@@ -178,6 +218,8 @@ async function runRoute(
             message,
         });
         broadcast({ type: "ERROR", message });
+    } finally {
+        activeSectionName = null;
     }
 }
 
@@ -301,6 +343,11 @@ function parseClientMessage(value: string): ClientMessage {
         case "TRAIN_EXIT":
             requireSectionAndAxles(parsed);
             return parsed as ClientMessage;
+        case "RESET_SECTION":
+        case "FAIL_RAIL":
+            requireSectionName(parsed);
+            requireRailId(parsed);
+            return parsed as ClientMessage;
         case "RUN_ROUTE":
             if (
                 parsed.route !== "MAIN" &&
@@ -319,10 +366,23 @@ function parseClientMessage(value: string): ClientMessage {
 }
 
 function requireSectionAndAxles(value: Record<string, unknown>): void {
-    if (typeof value.sectionName !== "string") {
-        throw new Error("sectionName is required");
-    }
+    requireSectionName(value);
     requireAxleCount(value.axleCount);
+}
+
+function requireSectionName(value: Record<string, unknown>): void {
+    if (
+        typeof value.sectionName !== "string" ||
+        !/^(?:[1-9]|1[01])T$/.test(value.sectionName)
+    ) {
+        throw new Error("sectionName must be between 1T and 11T");
+    }
+}
+
+function requireRailId(value: Record<string, unknown>): void {
+    if (value.railId !== "A" && value.railId !== "B") {
+        throw new Error("railId must be A or B");
+    }
 }
 
 function requireAxleCount(value: unknown): void {
@@ -383,9 +443,14 @@ function getMessageLogMetadata(
             return undefined;
         case "TRAIN_ENTER":
         case "TRAIN_EXIT":
+        case "RESET_SECTION":
+        case "FAIL_RAIL":
             return {
                 section: message.sectionName,
-                axleCount: message.axleCount,
+                ...("railId" in message ? { rail: message.railId } : {}),
+                ...("axleCount" in message
+                    ? { axleCount: message.axleCount }
+                    : {}),
             };
         case "RUN_ROUTE":
             return {

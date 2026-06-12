@@ -4,6 +4,7 @@ export type TrackSectionState = "FAILED" | "UNOCCUPIED" | "OCCUPIED";
 export type SystemLifecycle = "STOPPED" | "STARTING" | "RUNNING";
 export type StationRoute = "MAIN" | "UPPER_LOOP" | "LOWER_LOOP";
 export type RoutePhase = "ENTERING" | "TRAVERSING" | "EXITING";
+export type RailId = "A" | "B";
 
 export interface RelaySnapshot {
     state: RelayState;
@@ -19,7 +20,11 @@ export interface TrackSectionSnapshot {
         enteredAxleCount: number;
         exitedAxleCount: number;
         countDifference: number;
-        relays: Record<RelayType, RelaySnapshot>;
+        rails: Record<RailId, {
+            failed: boolean;
+            resetRemainingMs: number;
+            relays: Record<RelayType, RelaySnapshot>;
+        }>;
     };
 }
 
@@ -44,6 +49,12 @@ export type ClientMessage =
         axleCount: number;
         axlePulseMs: number;
         sectionPauseMs: number;
+    }
+    | {
+        type: "RESET_SECTION" | "FAIL_RAIL";
+        requestId: string;
+        sectionName: string;
+        railId: RailId;
     };
 
 export type ServerMessage =

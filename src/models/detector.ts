@@ -1,23 +1,50 @@
 import { Relay, RelayType } from "./relay";
 
 export type DetectionPointState = "FAILED" | "NORMAL";
+export type RailId = "A" | "B";
+
+export class RailChannel {
+    public failed = false;
+    public readonly rstr: Relay;
+    public readonly pr: Relay;
+    public readonly acpr: Relay;
+
+    constructor(
+        detectionPointName: string,
+        public readonly id: RailId,
+    ) {
+        this.rstr = new Relay(`${detectionPointName}-${id}-RSTR`, "RSTR");
+        this.pr = new Relay(`${detectionPointName}-${id}-PR`, "PR");
+        this.acpr = new Relay(`${detectionPointName}-${id}-ACPR`, "ACPR");
+    }
+
+    public getRelay(type: RelayType): Relay {
+        switch (type) {
+            case "RSTR":
+                return this.rstr;
+            case "PR":
+                return this.pr;
+            case "ACPR":
+                return this.acpr;
+        }
+    }
+}
 
 export class DetectionPoint {
     public state: DetectionPointState;
     public enteredAxleCount = 0;
     public exitedAxleCount = 0;
-    public readonly rstr: Relay;
-    public readonly pr: Relay;
-    public readonly acpr: Relay;
+    public readonly rails: Record<RailId, RailChannel>;
 
     constructor(
         public readonly name: string,
         initialState: DetectionPointState = "FAILED",
     ) {
         this.state = initialState;
-        this.rstr = new Relay(`${name}-RSTR`, "RSTR");
-        this.pr = new Relay(`${name}-PR`, "PR");
-        this.acpr = new Relay(`${name}-ACPR`, "ACPR");
+        this.rails = {
+            A: new RailChannel(name, "A"),
+            B: new RailChannel(name, "B"),
+        };
     }
 
     public beginCounting(axleCount: number): void {
@@ -45,14 +72,7 @@ export class DetectionPoint {
         this.exitedAxleCount = 0;
     }
 
-    public getRelay(type: RelayType): Relay {
-        switch (type) {
-            case "RSTR":
-                return this.rstr;
-            case "PR":
-                return this.pr;
-            case "ACPR":
-                return this.acpr;
-        }
+    public getRail(railId: RailId): RailChannel {
+        return this.rails[railId];
     }
 }

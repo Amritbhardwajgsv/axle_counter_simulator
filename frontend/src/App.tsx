@@ -7,26 +7,13 @@ import {
     useState,
 } from "react";
 import {
+    RailId,
     RelayState,
     StationRoute,
     TrackSectionSnapshot,
 } from "./types";
 import { RouteProgress, useStationSocket } from "./useStationSocket";
 import "./styles.css";
-
-const SECTION_POSITIONS: Record<string, { left: number; top: number }> = {
-    "1T": { left: 70, top: 180 },
-    "2T": { left: 245, top: 180 },
-    "3T": { left: 420, top: 180 },
-    "4T": { left: 595, top: 455 },
-    "5T": { left: 795, top: 180 },
-    "6T": { left: 680, top: 20 },
-    "7T": { left: 880, top: 535 },
-    "8T": { left: 1010, top: 180 },
-    "9T": { left: 1185, top: 180 },
-    "10T": { left: 1360, top: 180 },
-    "11T": { left: 1535, top: 180 },
-};
 
 const ROUTE_PATHS: Record<StationRoute, string> = {
     MAIN: "M35 410 H1715",
@@ -242,6 +229,44 @@ export default function App() {
                     sections={sections}
                     routeProgress={routeProgress}
                 />
+            </section>
+
+            <section className="panel equipment-panel">
+                <div className="panel-heading">
+                    <div>
+                        <p className="eyebrow">Wayside equipment rack</p>
+                        <h2>Block Diagnostics &amp; Recovery</h2>
+                    </div>
+                    <span className="rack-status">
+                        {sections.size} blocks monitored
+                    </span>
+                </div>
+                <div className="equipment-grid">
+                    {Array.from(sections.values()).map((section) => (
+                        <SectionCard
+                            key={section.name}
+                            section={section}
+                            running={running}
+                            activeSectionName={
+                                routeProgress?.sectionName ?? null
+                            }
+                            onReset={(railId) =>
+                                send({
+                                    type: "RESET_SECTION",
+                                    sectionName: section.name,
+                                    railId,
+                                })
+                            }
+                            onFail={(railId) =>
+                                send({
+                                    type: "FAIL_RAIL",
+                                    sectionName: section.name,
+                                    railId,
+                                })
+                            }
+                        />
+                    ))}
+                </div>
             </section>
 
             <section className="panel route-panel">
@@ -599,21 +624,22 @@ function StationDiagram({
             {TRACK_LABELS.map((label) => (
                 <span
                     key={label.name}
-                    className="track-label"
+                    className={`track-label ${
+                        sections.get(label.name)?.state.toLowerCase() ??
+                        "failed"
+                    } ${
+                        routeProgress?.sectionName === label.name
+                            ? "active"
+                            : ""
+                    }`}
                     style={{ left: label.left, top: label.top }}
                 >
+                    <i />
                     {label.name}
                 </span>
             ))}
             <div className="direction direction-left">UP direction</div>
             <div className="direction direction-right">DOWN direction</div>
-            {Array.from(sections.values()).map((section) => (
-                <SectionCard
-                    key={section.name}
-                    section={section}
-                    active={routeProgress?.sectionName === section.name}
-                />
-            ))}
         </div>
     );
 }
@@ -634,33 +660,154 @@ function getRouteProgress(progress: RouteProgress): number {
 
 function SectionCard({
     section,
-    active,
+    running,
+    activeSectionName,
+    onReset,
+    onFail,
 }: {
     section: TrackSectionSnapshot;
-    active: boolean;
+    running: boolean;
+    activeSectionName: string | null;
+    onReset: (railId: RailId) => void;
+    onFail: (railId: RailId) => void;
 }) {
-    const position = SECTION_POSITIONS[section.name];
     const detection = section.detectionPoint;
+    const [interlockMessage, setInterlockMessage] = useState<string | null>(
+        null,
+    );
 
     return (
         <article
-            className={`section-card ${section.state.toLowerCase()} ${active ? "active" : ""}`}
-            style={position}
+            className={`section-card ${section.state.toLowerCase()}`}
         >
             <div className="section-title">
-                <strong>{section.name}</strong>
-                <span>{detection.name}</span>
+                <div>
+                    <strong>{section.name}</strong>
+                    <span>{detection.name}</span>
+                </div>
+                <em>{section.state}</em>
             </div>
             <div className="count-row">
                 <span>IN <b>{detection.enteredAxleCount}</b></span>
                 <span>OUT <b>{detection.exitedAxleCount}</b></span>
                 <span>DELTA <b>{detection.countDifference}</b></span>
             </div>
-            <div className="relay-row">
-                <RelayLamp name="RSTR" state={detection.relays.RSTR.state} />
-                <RelayLamp name="PR" state={detection.relays.PR.state} />
-                <RelayLamp name="ACPR" state={detection.relays.ACPR.state} />
+            <div className="rail-grid">
+                {(["A", "B"] as RailId[]).map((railId) => {
+                    const rail = detection.rails[railId];
+                    const oppositeRail =
+                        detection.rails[railId === "A" ? "B" : "A"];
+                    const resetting = rail.resetRemainingMs > 0;
+                    const canReset =
+                        running &&
+                        activeSectionName !== section.name &&
+                        !resetting &&
+                        !rail.failed &&
+                        oppositeRail.failed &&
+                        rail.relays.PR.state === "DROPPED" &&
+                        rail.relays.ACPR.state === "PICKED" &&
+                        oppositeRail.relays.PR.state === "DROPPED" &&
+                        oppositeRail.relays.ACPR.state === "DROPPED";
+                    const canFail =
+                        running &&
+                        !resetting &&
+                        !rail.failed &&
+                        !oppositeRail.failed &&
+                        (
+                            (section.state === "OCCUPIED" &&
+                                activeSectionName === section.name) ||
+                            (section.state === "UNOCCUPIED" &&
+                                activeSectionName === null &&
+                                rail.relays.PR.state === "DROPPED" &&
+                                rail.relays.ACPR.state === "PICKED" &&
+                                oppositeRail.relays.ACPR.state === "PICKED")
+                        );
+
+                    return (
+                        <div
+                            className={`rail-channel ${rail.failed ? "failed" : ""}`}
+                            key={railId}
+                        >
+                            <strong>
+                                Rail {railId}
+                                {rail.failed && <span>Failed</span>}
+                            </strong>
+                            <div className="relay-row">
+                                <RelayLamp
+                                    name="RSTR"
+                                    state={rail.relays.RSTR.state}
+                                />
+                                <RelayLamp
+                                    name="PR"
+                                    state={rail.relays.PR.state}
+                                />
+                                <RelayLamp
+                                    name="ACPR"
+                                    state={rail.relays.ACPR.state}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className="section-fail"
+                                disabled={!canFail}
+                                onPointerDown={(event) =>
+                                    event.stopPropagation()
+                                }
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onFail(railId);
+                                }}
+                            >
+                                Fail rail {railId}
+                            </button>
+                            <button
+                                type="button"
+                                className="section-reset"
+                                aria-disabled={!canReset}
+                                onPointerDown={(event) =>
+                                    event.stopPropagation()
+                                }
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (canReset) {
+                                        setInterlockMessage(null);
+                                        onReset(railId);
+                                        return;
+                                    }
+
+                                    const failedRailId =
+                                        railId === "A" ? "B" : "A";
+                                    setInterlockMessage(
+                                        activeSectionName === section.name ||
+                                            rail.relays.ACPR.state !== "PICKED"
+                                            ? `Reset inhibited: train movement is still active in ${section.name}. Rail ${railId} ACPR must pick after the final axle exits before it can reset failed Rail ${failedRailId}.`
+                                            : `Reset unavailable: Rail ${failedRailId} must be failed with PR and ACPR dropped, while healthy Rail ${railId} ACPR is picked.`,
+                                    );
+                                }}
+                            >
+                                {resetting
+                                    ? `Resetting ${Math.ceil(
+                                          rail.resetRemainingMs / 1_000,
+                                      )}s`
+                                    : `Reset rail ${
+                                          railId === "A" ? "B" : "A"
+                                      } via ${railId}`}
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
+            {interlockMessage && (
+                <button
+                    type="button"
+                    className="interlock-popup"
+                    onClick={() => setInterlockMessage(null)}
+                >
+                    <strong>Reset interlock</strong>
+                    <span>{interlockMessage}</span>
+                    <small>Click to dismiss</small>
+                </button>
+            )}
         </article>
     );
 }

@@ -1,4 +1,5 @@
 import type { SimulationState } from "./engine/simulationengine";
+import type { RailId } from "./models/detector";
 
 export type StationRoute = "MAIN" | "UPPER_LOOP" | "LOWER_LOOP";
 export type RoutePhase = "ENTERING" | "TRAVERSING" | "EXITING";
@@ -37,6 +38,18 @@ export type ClientMessage =
         axleCount: number;
         axlePulseMs?: number;
         sectionPauseMs?: number;
+    }
+    | {
+        type: "RESET_SECTION";
+        requestId: string;
+        sectionName: string;
+        railId: RailId;
+    }
+    | {
+        type: "FAIL_RAIL";
+        requestId: string;
+        sectionName: string;
+        railId: RailId;
     };
 
 export type ServerMessage =
