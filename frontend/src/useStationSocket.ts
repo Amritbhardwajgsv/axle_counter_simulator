@@ -39,6 +39,19 @@ function socketUrl(): string {
     return `${protocol}//${host}/ws`;
 }
 
+function createRequestId(): string {
+    if (typeof crypto.randomUUID === "function") {
+        try {
+            return crypto.randomUUID();
+        } catch {
+            // Some embedded or non-secure browser contexts block randomUUID.
+        }
+    }
+
+    const randomPart = Math.random().toString(36).slice(2);
+    return `${Date.now().toString(36)}-${randomPart}`;
+}
+
 export function useStationSocket() {
     const socketRef = useRef<WebSocket | null>(null);
     const reconnectTimerRef = useRef<number | null>(null);
@@ -66,7 +79,7 @@ export function useStationSocket() {
                 socket.send(
                     JSON.stringify({
                         type: "GET_STATE",
-                        requestId: crypto.randomUUID(),
+                        requestId: createRequestId(),
                     }),
                 );
             });
@@ -135,7 +148,7 @@ export function useStationSocket() {
         socket.send(
             JSON.stringify({
                 ...message,
-                requestId: crypto.randomUUID(),
+                requestId: createRequestId(),
             }),
         );
     }, []);
